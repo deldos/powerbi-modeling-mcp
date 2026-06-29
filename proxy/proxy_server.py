@@ -176,6 +176,7 @@ class XmlaReadinessProxy:
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=None,  # inherit — Desktop logs to our stderr
+            limit=4 * 1024 * 1024,  # 4 MB — tools/list is ~77 KB; default 64 KB limit raises LimitOverrunError
         )
         _log.debug("started %s (pid=%d)", self._exe, self._proc.pid)
         try:
