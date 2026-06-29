@@ -147,10 +147,13 @@ class XmlaReadinessProxy:
         server_exe: str,
         timeout_s: int = DEFAULT_TIMEOUT_S,
         poll_s: float = DEFAULT_POLL_S,
+        extra_args: list[str] | None = None,
     ) -> None:
         self._exe = server_exe
         self._timeout_s = timeout_s
         self._poll_s = poll_s
+        # Args forwarded to the real exe (e.g. ["--readwrite", "--skip-confirmation"])
+        self._extra_args: list[str] = extra_args or ["--start"]
 
         self._proc: asyncio.subprocess.Process | None = None
 
@@ -169,7 +172,7 @@ class XmlaReadinessProxy:
     async def run(self) -> None:
         self._proc = await asyncio.create_subprocess_exec(
             self._exe,
-            "--start",
+            *self._extra_args,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=None,  # inherit — Desktop logs to our stderr
@@ -409,6 +412,9 @@ class XmlaReadinessProxy:
 async def _async_main() -> None:
     timeout_s = int(os.environ.get("XMLA_READINESS_TIMEOUT_S", DEFAULT_TIMEOUT_S))
     poll_s = float(os.environ.get("XMLA_READINESS_POLL_S", DEFAULT_POLL_S))
+    # Space-separated extra args forwarded to the real exe, e.g. "--readwrite --skip-confirmation"
+    raw_extra = os.environ.get("POWERBI_MCP_ARGS", "--start").strip()
+    extra_args = raw_extra.split() if raw_extra else ["--start"]
 
     try:
         exe = find_server_exe()
@@ -417,8 +423,8 @@ async def _async_main() -> None:
         sys.stdout.buffer.write(dump_line(err))
         sys.exit(1)
 
-    _log.info("proxy starting: exe=%s timeout=%ds poll=%.0fs", exe, timeout_s, poll_s)
-    proxy = XmlaReadinessProxy(exe, timeout_s=timeout_s, poll_s=poll_s)
+    _log.info("proxy starting: exe=%s args=%s timeout=%ds poll=%.0fs", exe, extra_args, timeout_s, poll_s)
+    proxy = XmlaReadinessProxy(exe, timeout_s=timeout_s, poll_s=poll_s, extra_args=extra_args)
     await proxy.run()
 
 
