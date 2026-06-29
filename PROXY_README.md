@@ -4,6 +4,10 @@
 > **Upstream**: [microsoft/powerbi-modeling-mcp](https://github.com/microsoft/powerbi-modeling-mcp)  
 > **Tracking**: AW `action-1782715264209`
 
+## Operator note
+
+This repository wraps the Microsoft closed-source MCP binary. It does **not** patch the binary. The proxy intercepts only `table_operations.RefreshWithXMLA` and passes all other MCP calls through unchanged. `deldos/powerbi-modeling-mcp` is not a full source fork of `microsoft/powerbi-modeling-mcp` — Microsoft does not publish source for their runtime.
+
 ## Problem
 
 When Power BI Desktop opens a `.pbip` file its embedded Analysis Services engine
